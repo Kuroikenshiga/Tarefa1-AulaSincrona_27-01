@@ -1,0 +1,4 @@
+[wokwi]
+version = 1
+firmware = 'build\Tarefa1-AulaSincrona_27-01.hex'
+elf = 'build\Tarefa1-AulaSincrona_27-01.elf'
