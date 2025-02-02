@@ -5,7 +5,7 @@
 #include "pio_led.pio.h"
 #include "hardware/timer.h"
 
-const uint OUT_PIN = 7, PIN_BTN_A = 5, PIN_BTN_B = 6,PIN_LED = 13;
+const uint OUT_PIN = 7, PIN_BTN_A = 5, PIN_BTN_B = 6, PIN_LED = 13;
 const uint MATRIX_DIMENSION = 5;
 
 // Apelida o tipo de dado "uinsigned char" para "uchar"
@@ -13,12 +13,20 @@ typedef unsigned char uchar;
 
 uint32_t LAST_EVENT_A = 0, LAST_EVENT_B = 0;
 
+// Responsável por indicar qual matriz deverá ser desenhada na matriz de leds
 uint32_t CURRENT_INDEX_DRAW = 0;
 
 // Matriz com todos os desenhos dos números
-const float draws[9][5][5] = {
+const float draws[10][5][5] = {
 
     // Desenhos que serão usados nos padrões de leds
+
+    {{0.5, 0.5, 0.5, 0.5, 0.5},
+     {0.5, 0.0, 0.0, 0.0, 0.5},
+     {0.5, 0.0, 0.0, 0.0, 0.5},
+     {0.5, 0.0, 0.0, 0.0, 0.5},
+     {0.5, 0.5, 0.5, 0.5, 0.5}},
+
     {{0.0, 0.0, 0.5, 0.0, 0.0},
      {0.0, 0.5, 0.5, 0.0, 0.0},
      {0.5, 0.0, 0.5, 0.0, 0.0},
@@ -108,7 +116,7 @@ int main()
 
     gpio_set_dir(PIN_BTN_A, GPIO_IN);
     gpio_set_dir(PIN_BTN_B, GPIO_IN);
-    gpio_set_dir(PIN_LED,GPIO_OUT);
+    gpio_set_dir(PIN_LED, GPIO_OUT);
 
     gpio_pull_up(PIN_BTN_A);
     gpio_pull_up(PIN_BTN_B);
@@ -116,7 +124,7 @@ int main()
     offset = pio_add_program(pio, &pio_led_program);
     sm = pio_claim_unused_sm(pio, true);
     pio_led_program_init(pio, sm, offset, OUT_PIN);
-    //Habilita a interrupção no GPIO
+    // Habilita a interrupção no GPIO
     gpio_set_irq_enabled_with_callback(PIN_BTN_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(PIN_BTN_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     // Fim da configuração inicial do firmaware
@@ -126,9 +134,9 @@ int main()
 
     while (true)
     {
-        gpio_put(PIN_LED,1);
+        gpio_put(PIN_LED, 1);
         sleep_ms(100);
-        gpio_put(PIN_LED,0);
+        gpio_put(PIN_LED, 0);
         sleep_ms(100);
     }
 
@@ -150,29 +158,32 @@ void gpio_irq_handler(uint gpio, uint32_t events)
 {
 
     uint32_t current_time = to_us_since_boot(get_absolute_time());
-    
+
     if (gpio == PIN_BTN_A)
     {
         // Condição para fazer o deboucing do botão A
         if (current_time - LAST_EVENT_A > 200000)
         {
             LAST_EVENT_A = current_time;
-            if(CURRENT_INDEX_DRAW < 8){
+            if (CURRENT_INDEX_DRAW < 9)
+            {
                 CURRENT_INDEX_DRAW++;
             }
         }
     }
 
-    else if(gpio == PIN_BTN_B){
+    else if (gpio == PIN_BTN_B)
+    {
         // Condição para fazer o deboucing do botão B
         if (current_time - LAST_EVENT_B > 200000)
         {
             LAST_EVENT_B = current_time;
-            if(CURRENT_INDEX_DRAW > 0 ){
+            if (CURRENT_INDEX_DRAW > 0)
+            {
                 CURRENT_INDEX_DRAW--;
             }
         }
     }
-    
+
     showNumberDraw(&pio, &sm, &CURRENT_INDEX_DRAW);
 }
